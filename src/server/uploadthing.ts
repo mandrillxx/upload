@@ -1,20 +1,19 @@
 import { useUser } from "@clerk/nextjs";
-import { currentUser } from "@clerk/nextjs/app-beta";
+import { auth, currentUser } from "@clerk/nextjs/app-beta";
+import { getAuth } from "@clerk/nextjs/server";
 import { createFilething, type FileRouter } from "uploadthing/server";
-const f = createFilething();
-
-const auth = (req: Request) => ({ id: "fakeId" });
+const f = createFilething<"pages">();
 
 export const ourFileRouter = {
   imageUploader: f
     .fileTypes(["image", "video"])
     .maxSize("1GB")
-    .middleware(async (req: Request) => {
-      const user = await auth(req);
+    .middleware(async (req, res) => {
+      const user = getAuth(req);
 
       if (!user) throw new Error("Unauthorized");
 
-      return { userId: user.id };
+      return { userId: user.userId };
     })
     .onUploadComplete(async ({ metadata }) => {
       console.log("Upload complete for userId:", metadata.userId);
